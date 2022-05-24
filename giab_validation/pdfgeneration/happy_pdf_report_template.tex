@@ -1,0 +1,95 @@
+\documentclass[a4paper, 10pt]{article}
+
+\usepackage[cm]{fullpage} % shrinking of the margins
+\usepackage{booktabs}   % fancier tables
+\pagestyle{empty} % remove page number
+\usepackage{graphicx} % insert png images
+\usepackage[T1]{fontenc} % font to steal smaller underscore from
+\usepackage{xcolor}
+\renewcommand{\_}{{\fontfamily{ptm}\selectfont\textunderscore}} % underscore from Times
+\usepackage{siunitx} % Table alignment by decimals
+
+\title{GiaB Quality Control Report (Hap.py)}
+\date{} % Omits the date from the maketitle command
+\vspace{-12ex} % Removes some of the trailing newlines from the maketitle command
+
+\begin{document}
+\maketitle
+
+{# Making table with sample info #}
+\begin{tabular}{r | l}
+	%#- Print the report date and header items (sample name, run date, library and run folder). Errors are red and centered
+	\noindent \textbf{Report date} & \today \\
+	% minus sign (-) removes the whitespaces 
+	{% for key,value in report_data[0].iterrows() %}
+		{# Making table columns: #}	
+	
+		{# Column 1: Parameter #}
+		\textbf{ {{ key|replace('_', ' ') }} } & 
+
+		{# Column 2: Parameter value #}
+		{{ value.Value|replace('_', '\_') }} \\
+			
+	{% endfor %}
+\end{tabular}
+
+\vspace{8ex}
+
+\begin{center}
+\begin{tabular}{l S S c c}
+{Parameter} & {Value} & {Target*} & {Passed} & {Failed} \\
+	{# key er rækker på index kolonne #}
+	{# value er dataframe værdier #}
+	{# value.Value er værdier i kolonnen "Value" fra python dataframe #}
+	\toprule
+	% report_data[1].iterrows() selects first dataframe in report data
+	{% for key,value in report_data[1].iterrows() %}
+		{# Making table columns: #}	
+	
+		{# Column 1: Parameter #}
+		\textbf{ {{ key|replace('_', ' ') }} } & 
+
+		{# Column 2: Parameter value #}
+		{# The %.xf is number of values shown, the number in the function is how to round #}
+		{{ "%.5f"| format(normal_round(value.Value, 5)) if value.Value is float or value.Value is integer else value.Value }} &
+
+		{# Column 3: Target values #}
+		{# The %.xf is number of values shown, the number in the function is how to round #}
+		{{ "%.5f"| format(normal_round(value.Target, 5)) if value.Target is float or value.Target is integer else value.Target }} &
+		
+		{# Column 4: Passed check #}
+		{% if value.Value is float or value.Value is integer %} 
+			{% if value.Target is float or value.Target is integer %}
+				{% if value.Value >= value.Target %} 
+					x 
+				{% endif %}
+			{% endif %}
+		{% endif %} &
+
+		{# Column 5: Failed check #}
+		{% if value.Value is float or value.Value is integer %} 
+			{% if value.Target is float or value.Target is integer %}
+				{% if value.Value < value.Target %} 
+					x 
+				{% endif %}
+			{% endif %}
+		{% endif %} \\
+
+		% Making horizontal line after this key:	
+		{% if key == "setMidruleHere" %}
+			\midrule
+		{% endif %}
+
+
+	{% endfor %}
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{1cm}
+
+\begin{center}
+* Target values for Genome in a Bottle samples in the NGC QA Program H1 2022.
+\end{center}
+
+\end{document}
